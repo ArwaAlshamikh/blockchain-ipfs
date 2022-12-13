@@ -17,21 +17,21 @@ def hello_world():
 
 @app.route("/download")
 def download():
-    if not session['userID']:
+    if not session.get('userID'):
         return render_template('login.html',message='login to continue')
-    return render_template('download.html')
+    return render_template('download.html',files = get_my_files())
 
 
 @app.route("/upload")
 def upload():
-    if not session['userID']:
-        return render_template('login.html',message='login to continue')
+    if not session.get('userID'):
+        return redirect(url_for('login'))
     return render_template('upload.html',peers = get_peers())
 
 
 @app.route("/my_peers")
 def my_peers():
-    if not session['userID']:
+    if not session.get('userID'):
         return render_template('login.html',message='login to continue')
     return render_template('my_peers.html',peers = get_peers())
 
@@ -90,15 +90,15 @@ def add_file():
                 response = 'No file selected for uploading'
             if user_file:
                 error_flag = False
-                # add a timestamp
-                timestr = time.strftime("%Y%m%d-%H%M%S")
-                filename = timestr + secure_filename(user_file.filename)
-                print(filename)
+                filename = secure_filename(user_file.filename)
+                sender = session['userID']
+                receiver = request.form['Receiver']
+                print(filename,sender, receiver) 
                 user_file.save(
                     os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 # filepath from upload
                 file_path = os.sep.join(["upload", filename])
-                hash = add_a_file(file_path)
+                fileHash = add_a_file(file_path)
                 # response = "your file was successfully added to the blockchain\n your has is: "+hash
             else:
                 error_flag = True
@@ -107,9 +107,11 @@ def add_file():
         if error_flag == True:
             return render_template('upload.html', message=response)
         else:
+            # save the record to db
+            print(save_a_shared_file(filename,sender,receiver,fileHash))
             return render_template(
                 'upload.html',
-                message="File succesfully uploaded\nFile hash is:" + hash , userID = session.userID)
+                message="File succesfully uploaded", userID = session['userID'])
 
 
 @app.route('/retrieve_file', methods=['POST'])
@@ -134,9 +136,8 @@ def retrieve_file():
         if error_flag == True:
             return render_template('download.html', message=message)
         else:
-            return render_template('download.html',
-                                   message=file_path +
-                                   " File successfully downloaded")
+            flash(file_path + " File successfully downloaded")
+            return render_template('download.html')
 
 
 ###########################################################
@@ -214,7 +215,7 @@ def create_my_keys(userID):
     #set the path to the database
     con = get_con()
     myKey = secrets.token_hex(16)
-    saveKeyQuery = f"insert into myKeys(userID, userKey)VALUEs({userID},'{myKey}')"
+    saveKeyQuery = f"insert into myKeys(userID, userKey)VALUEs({userID},'{myKey}');"
     if con.execute(saveKeyQuery):
         con.commit()
         con.close()
@@ -223,13 +224,30 @@ def create_my_keys(userID):
 
 def get_peers():
     con = get_con()
-    peersQuery = f"select * from peers"
+    peersQuery = f"select * from peers;"
     peers = con.execute(peersQuery).fetchall()
     con.close()
     return peers
 
-def save_a_shared_file(filename,sender,receiver):
+def save_a_shared_file(filename,sender,receiver,fileHash):
     con = get_con()
+    saveFileQ = f"insert into userFiles(userID,receiver,fileName,fileHash)VALUES({sender},{receiver},'{filename}','{fileHash}');"
+    if con.execute(saveFileQ):
+        con.commit()
+        con.close()
+        return 'file saved'
+
+    con.commit()
+    con.close()
+    return 'some error coorred while saving'
+
+def get_my_files():
+    con = get_con()
+    filesQuery = f"SELECT * from userFiles where receiver = {session['userID']};"
+    print(filesQuery)
+    files = con.execute(filesQuery).fetchall()
+    con.close()
+    return files
 
 def save_to_db(username, password, names):
     #set the path to the database

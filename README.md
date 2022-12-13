@@ -16,4 +16,4 @@ This application requires the following
 4. Activate the virtual environment:
 	- windows `.venv\Scripts\activate.bat` 
 	- linux `. .venv/bin/activate`
-5. run the app `python3 client.py`
+5. run the app `flask --app client.py  --debug run`
