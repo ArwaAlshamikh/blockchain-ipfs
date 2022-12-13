@@ -1,25 +1,17 @@
-<!DOCTYPE html>
-<head>
-	<title>SHARED FILES</title>
-	<link rel="stylesheet" href="static/css/handle_file.css">
-	<link rel="stylesheet" href="static/vendor/bootstrap/css/bootstrap.min.css">
-	<link rel="stylesheet" href="static/vendor/jquery/jquery-3.5.1.js">
-	<link rel="stylesheet" href="static/vendor/bootstrap/js/bootstrap.min.js">
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel&display=swap">
-	<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@500&display=swap" rel="stylesheet">
-</head>
-
-<body>
-
+{% extends 'h2.html' %}
+{% block title %} SHARED FILES {% endblock %}
+{% block content%}
+	
 	<div class="grandParentContaniner">
 		<div class="parentContainer">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                   <li class="breadcrumb-item"><a href="/">Home</a></li>
-                  <li class="breadcrumb-item active" aria-current="page">My Shared Files</li>
+                  <li class="breadcrumb-item active" aria-current="page">My Shared Files</li>&nbsp;&nbsp; | &nbsp;&nbsp;
+                <a href="/signup">Signup</a>
                 </ol>
               </nav>
-			<form class="file-frm" method="post" action="/retrieve_file" enctype="multipart/form-data">
+			<form class="file-frm" method="post" action="/login">
 
 				<h3>Login </h3>
 				<div class="container">
@@ -45,7 +37,7 @@
 			</form>
 		</div>
 	</div>
-</body>
-</html>
+
+{% endblock %}
 
 

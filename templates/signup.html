@@ -1,25 +1,17 @@
-<!DOCTYPE html>
-<head>
-	<title>SHARED FILES</title>
-	<link rel="stylesheet" href="static/css/handle_file.css">
-	<link rel="stylesheet" href="static/vendor/bootstrap/css/bootstrap.min.css">
-	<link rel="stylesheet" href="static/vendor/jquery/jquery-3.5.1.js">
-	<link rel="stylesheet" href="static/vendor/bootstrap/js/bootstrap.min.js">
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel&display=swap">
-	<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@500&display=swap" rel="stylesheet">
-</head>
-
-<body>
-
+{% extends 'h2.html' %}
+{% block title %} SHARED FILES {% endblock %}
+{% block content%}
+	
 	<div class="grandParentContaniner">
 		<div class="parentContainer">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                   <li class="breadcrumb-item"><a href="/">Home</a></li>
-                  <li class="breadcrumb-item active" aria-current="page">My Shared Files</li>
+                  <li class="breadcrumb-item active" aria-current="page">My Shared Files</li>&nbsp;&nbsp; | &nbsp;&nbsp;
+                <a href="/login">Login</a>
                 </ol>
               </nav>
-			<form class="file-frm" method="post" action="/retrieve_file" enctype="multipart/form-data">
+			<form class="file-frm" method="post" action="/signup">
 
 				<h3>Signup </h3>
 				<div class="container">
@@ -32,16 +24,20 @@
                 </div>
 				<hr>
 				<div class="form-group text-input">
-					<label>Username</label>
-					<input type="text" name="username" class="" required>
+					<label for="username">Username</label><br>
+					<input type="text" id="username" name="username" class="" required>
 				</div>
 				<div class="form-group text-input">
-					<label>password</label>
-					<input type="password" name="password" class="" required>
+					<label for="names">Your Name</label><br>
+					<input type="text" id="names" name="names" class="" required>
 				</div>
 				<div class="form-group text-input">
-					<label>Confirm password</label>
-					<input type="password" name="conf_password" class="" required>
+					<label for="password">password</label><br>
+					<input type="password" id="password" name="password" class="" required>
+				</div>
+				<div class="form-group text-input">
+					<label for="conf_password">Confirm password</label><br>
+					<input type="password" id="conf_password" name="conf_password" class="" required>
 				</div>
 				<button type="submit" class="send-btn">Signup</button><br><br>
 
@@ -49,7 +45,8 @@
 			</form>
 		</div>
 	</div>
-</body>
-</html>
+
+{% endblock %}
+
 
 

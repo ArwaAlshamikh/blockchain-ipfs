@@ -1,18 +1,7 @@
-<!DOCTYPE html>
-<head>
-	<title>SHARE A FILE</title>
-	<link rel="stylesheet" href="static/css/handle_file.css">
-	<link rel="stylesheet" href="static/css/connect_blockchain.css">
-	<link rel="stylesheet" href="static/vendor/bootstrap/css/bootstrap.min.css">
-	<link rel="stylesheet" href="static/vendor/jquery/jquery-3.5.1.js">
-	<link rel="stylesheet" href="static/vendor/bootstrap/js/bootstrap.min.js">
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel&display=swap">
-	<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@500&display=swap" rel="stylesheet">
-</head>
-
-<body>
-
-		
+{% extends 'h2.html' %}
+{% block title %} SHARED FILES {% endblock %}
+{% block content%}
+	
 	<div class="grandParentContaniner">
 		<div class="parentContainer">   
             <nav aria-label="breadcrumb">
@@ -21,7 +10,7 @@
                   <li class="breadcrumb-item active" aria-current="page">Share a File</li>
                 </ol>
               </nav>		
-
+              <input type="hidden" id="userID" name="userID" value="{{ userID }}">
 			<form class="file-frm" method="post" action="/add_file" enctype="multipart/form-data">
 
 				<h3>Share a file </h3>
@@ -35,26 +24,24 @@
                 </div>
 				<div class="form-group">
 					<label>Receiver :</label>
-                    <select name="receiver_name" required>
+                    <select name="receiver_name" id="receiver_name" required>
                         <option value="Select_Recipient" selected disabled>Select Recipient</option>
+                        {{ peers }}
                     </select>
 				</div>							
 
 				<br>
 				<div class="form-group file-input">
-					<input type="file" name="file" class="" required>
+					<input type="file" id="file" name="file" class="" required>
 				</div>
 				
 				<br>
-
-				<!-- <a class="btn view-chain" href="/">View chain</a> -->
-				<button type="submit" class="send-btn">Submit</button><br><br>
+				<button type="submit" id="upload_a_file" class="send-btn">Submit</button><br><br>
 				
 			</form>
 		</div>
 	</div>
 
-</body>
-</html>
+{% endblock %}
 
 

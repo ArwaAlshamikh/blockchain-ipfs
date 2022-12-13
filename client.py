@@ -1,12 +1,8 @@
-from flask import Flask, redirect, url_for, render_template, request, flash
+from flask import Flask, redirect, url_for, render_template, request, flash,session
 from my_constants import app
 from flask_socketio import SocketIO, send, emit
 from werkzeug.utils import secure_filename
-import time, ipfshttpclient, os, requests, socketio, sqlite3, hashlib
-
-# sio = socketio.Client()
-# client_ip = app.config['NODE_ADDR']
-# connection_status = False
+import time, ipfshttpclient, os, requests, socketio, sqlite3, hashlib,sqlite3,secrets  
 
 
 def allowed_file(filename):
@@ -21,40 +17,66 @@ def hello_world():
 
 @app.route("/download")
 def download():
+    if not session['userID']:
+        return render_template('login.html',message='login to continue')
     return render_template('download.html')
 
 
 @app.route("/upload")
 def upload():
-    return render_template('upload.html')
+    if not session['userID']:
+        return render_template('login.html',message='login to continue')
+    return render_template('upload.html',peers = get_peers())
 
 
 @app.route("/my_peers")
 def my_peers():
-    return render_template('my_peers.html')
+    if not session['userID']:
+        return render_template('login.html',message='login to continue')
+    return render_template('my_peers.html',peers = get_peers())
 
+@app.route('/logout')
+def logout():
+    session.pop('userID', None)
+    return hello_world()
 
-@app.route("/signup", method=['GET'])
+@app.route("/login", methods=['GET','POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        userID = login(username,password)
+
+        if not userID:
+            session['userID'] = None  
+            return render_template('login.html',message="incorrect username or password")  
+        else:
+            session['userID'] = userID
+            return render_template('index.html')
+    else:
+        return render_template('login.html')
+
+@app.route("/signup", methods=['GET'])
 def signup_get():
     return render_template('signup.html')
 
-
-@app.route("/signup", method=['POST'])
-def signup_post():
+@app.route("/signup", methods=['POST'])
+def signup():
     if request.method == 'POST':
-        username = request.files['usernaem']
-        password = request.files['password']
-        conf_pass = request.files['conf_password']
+        username = request.form['username']
+        names = request.form['names']
+        password = request.form['password']
+        conf_pass = request.form['conf_password']
         if password == conf_pass:
             #save to db
-            save_to_db(username, password)
+            save_to_db(username, password, names)
 
             return render_template('signup.html',
-                                   message='Account created successfully')
+                                   message='Account created successfully, login to continue')
         else:
             return render_template('signup.html',
-                                   message='Your passwords do not match')
-
+                                   message='Your passwords do not match')   
+    
 
 @app.route('/add_file', methods=['POST'])
 def add_file():
@@ -67,7 +89,7 @@ def add_file():
             if user_file.filename == '':
                 response = 'No file selected for uploading'
             if user_file:
-                error_flag = True
+                error_flag = False
                 # add a timestamp
                 timestr = time.strftime("%Y%m%d-%H%M%S")
                 filename = timestr + secure_filename(user_file.filename)
@@ -77,6 +99,7 @@ def add_file():
                 # filepath from upload
                 file_path = os.sep.join(["upload", filename])
                 hash = add_a_file(file_path)
+                # response = "your file was successfully added to the blockchain\n your has is: "+hash
             else:
                 error_flag = True
                 response = 'Allowed file types are txt, pdf, png, jpg, jpeg, gif'
@@ -86,7 +109,7 @@ def add_file():
         else:
             return render_template(
                 'upload.html',
-                message="File succesfully uploaded\nFile hash is:" + hash)
+                message="File succesfully uploaded\nFile hash is:" + hash , userID = session.userID)
 
 
 @app.route('/retrieve_file', methods=['POST'])
@@ -118,6 +141,16 @@ def retrieve_file():
 
 ###########################################################
 ###                                                     ###
+###                   PEER MANAGEMENT                   ###
+###                                                     ###
+###########################################################
+
+
+
+
+
+###########################################################
+###                                                     ###
 ###                   BLOCKCHAIN PART                   ###
 ###                                                     ###
 ###########################################################
@@ -144,7 +177,7 @@ def add_a_file(filename):
 
 
 # downloaad a file
-#   returns a file path of the file
+# returns a file path of the file
 def get_a_file(file_hash):
     # declare
     url = app.config["END_POINT"] + '/api/v0/cat'
@@ -171,30 +204,68 @@ def get_a_file(file_hash):
 # **                                                      **
 # **********************************************************
 
-#set the path to the database
-db_url = os.sep.join([app.config['CURRENT_FOLDER'], 'users_db'])
-connection = sqlite3.connect(db_url)
-cur = connection.cursor()
 
+def get_con():
+    conn = sqlite3.connect('ipfs.db')
+    conn.row_factory = sqlite3.Row
+    return conn
 
-def save_to_db(username, password):
-    #generate user key
-    public_key = 'gen_key'
-    password = hashlib.md5(password.encode())
-    signup_query = f"insert into users(username,password,public_key)VALUES('{username}','{password}','{public_key}');"
-    cur.execute(signup_query)
+def create_my_keys(userID):
+    #set the path to the database
+    con = get_con()
+    myKey = secrets.token_hex(16)
+    saveKeyQuery = f"insert into myKeys(userID, userKey)VALUEs({userID},'{myKey}')"
+    if con.execute(saveKeyQuery):
+        con.commit()
+        con.close()
+        return True
+    return False
+
+def get_peers():
+    con = get_con()
+    peersQuery = f"select * from peers"
+    peers = con.execute(peersQuery).fetchall()
+    con.close()
+    return peers
+
+def save_a_shared_file(filename,sender,receiver):
+    con = get_con()
+
+def save_to_db(username, password, names):
+    #set the path to the database
+    con = get_con()
+    password = password.encode()
+    password = hashlib.md5(password).hexdigest()
+    print(password)
+    signup_query = f"insert into peers(username,password,names)VALUES('{username}','{password}','{names}');"
+    con.execute(signup_query)
+    con.commit()
+    con.close()
+
+    # get userID
+    userID = login(username,password, True)
+    if create_my_keys(userID):           
+        return True
+    return False
 
 
 #log in a user
-def login(username, password):
-    password = hashlib.md5(password.encode())
-    login_query = f"SELECT user_id from users WHERE username='{username}' AND Password = '{password}';"
-    user_id = cur.execute(login_query)
-
-    if not cur.fetchone():
-        return 0
+def login(username, password, internal = False):
+    con = get_con()
+    if not internal:
+        hasher = hashlib.md5()
+        hasher.update(password.encode())
+        password = hasher.hexdigest()
+    cur = con.cursor()
+    login_query = f"SELECT userID from peers WHERE username='{username}' AND password = '{password}';"
+    userIDCrude = cur.execute(login_query).fetchone()
+    con.close()
+    if userIDCrude:
+        for userID in userIDCrude:
+            session['username'] = username
+            return userID
     else:
-        return user_id
+        return None
 
 
 if __name__ == '__main__':
